@@ -18,6 +18,7 @@
 
 from pathlib import Path
 import numpy as np
+import matplotlib.pyplot as plt
 
 data_dir = Path(r'D:\UD\workspace\ml_wheel\data')
 # 每条数据包括14项，其中前面13项是影响因素，第14项是相应的房屋价格中位数
@@ -72,19 +73,47 @@ class LinerRegression:
         gradient_b = np.mean(gradient_b)
         return gradient_w, gradient_b
 
+    def update(self, gradient_w, gradient_b, eta=0.01):
+        self.w -= gradient_w * eta
+        self.b -= gradient_b * eta
+
+    def train(self, train_data, iter=1000, eta=0.01):
+        losses = []
+        x = train_data[:, :-1]
+        y = train_data[:, -1:]
+        for i in range(iter):
+            z = self.calc(x)
+            L = self.loss(z, y)
+            gradient_1, gradient_2 = self.gradient(x, y)
+            self.update(gradient_1, gradient_2, eta)
+            losses.append(L)
+        return losses
+
+    def train_sgd(self, train_data, iter=100, batch_size=100, eta=0.01):
+        losses = []
+        np.random.shuffle(train_data)
+        for i in range(iter):
+            mini_batches = [train_data[j:j+batch_size] for j in range(0, len(train_data), batch_size)]
+            for mini_batch in mini_batches:
+                x = mini_batch[:, :-1]
+                y = mini_batch[:, -1:]
+                z = self.calc(x)
+                L = self.loss(z, y)
+                gradient_1, gradient_2 = self.gradient(x, y)
+                self.update(gradient_1, gradient_2, eta)
+                losses.append(L)
+        return losses
+
 
 if __name__ == '__main__':
     ori_data = load_data(data_dir, 'housing.data')
     train_data, test_data = process_data(ori_data)
-    X = train_data[:, :-1]
-    y = train_data[:, -1:]
     network = LinerRegression(13)
-    print(X)
-    print(X.shape)
-    z = network.calc(X)
-    print(network.loss(z, y))
-    gradient_w, gradient_b = network.gradient(X, y)
-    print(gradient_w)
-    print(gradient_b)
+    plot_y = network.train_sgd(train_data, iter=200)
+    plot_x = range(len(plot_y))
+    plt.plot(plot_x, plot_y)
+    plt.show()
+    network_2 = LinerRegression(13)
+    print(plot_y[-1], network_2.train(train_data)[-1])
 
 
