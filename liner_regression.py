@@ -37,6 +37,9 @@ def process_data(data_, train_ratio=0.8):
     # 拆分训练集、测试集
     offset = int(data_.shape[0] * 0.8)
     # 计算最大值、最小值、平均值 用做归一化处理
+    global maximum
+    global minimum
+    global avgs
     maximum, minimum, avgs = data_.max(axis=0), data_.min(axis=0), data_.mean(axis=0)
     # 将属性全部归一化
     for i in range(feature_num):
@@ -104,16 +107,20 @@ class LinerRegression:
                 losses.append(L)
         return losses
 
+    def predict(self, x):
+        z = self.calc(x)
+        return z * (maximum[-1] - minimum[-1]) + avgs[-1]
+        # return z
+
 
 if __name__ == '__main__':
     ori_data = load_data(data_dir, 'housing.data')
+    o_data = load_data(data_dir, 'housing.data')
     train_data, test_data = process_data(ori_data)
     network = LinerRegression(13)
     plot_y = network.train_sgd(train_data, iter=200)
     plot_x = range(len(plot_y))
     plt.plot(plot_x, plot_y)
     plt.show()
-    network_2 = LinerRegression(13)
-    print(plot_y[-1], network_2.train(train_data)[-1])
 
 
